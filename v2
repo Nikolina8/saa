@@ -1,0 +1,66 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "61545867",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# ⚙️ GUI setup with widgets, decay slider, and mode selection (already provided above)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "8176467c",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "\n",
+    "# ▶️ Additional analysis: display Max Sharpe and Min Volatility portfolio results\n",
+    "\n",
+    "from pypfopt.efficient_frontier import EfficientFrontier\n",
+    "\n",
+    "try:\n",
+    "    df = df_global[selected_assets]\n",
+    "    logret = log_returns(df).astype(np.float64)\n",
+    "    decay = decay_slider.value\n",
+    "    cov = ewma_covariance_matrix(logret.values, alpha=decay)\n",
+    "    cov = pd.DataFrame(cov * 50, index=df.columns, columns=df.columns)\n",
+    "    mu = {asset: float(expected_return_inputs[asset].value.strip() or 0) for asset in selected_assets}\n",
+    "    mu = pd.Series(mu)\n",
+    "\n",
+    "    ef_sharpe = EfficientFrontier(mu, cov, weight_bounds=(0, 1))\n",
+    "    ef_sharpe.add_objective(objective_functions.L2_reg, gamma=gamma_slider.value)\n",
+    "    ef_sharpe.add_sector_constraints(sector_mapper,\n",
+    "                                     {s: pair[0].value for s, pair in sector_constraint_widgets.items()},\n",
+    "                                     {s: pair[1].value for s, pair in sector_constraint_widgets.items()})\n",
+    "    ef_sharpe.max_sharpe()\n",
+    "    sharpe_weights = ef_sharpe.clean_weights()\n",
+    "    sharpe_perf = ef_sharpe.portfolio_performance()\n",
+    "    print(\"📈 Max Sharpe Portfolio:\")\n",
+    "    print(\"Weights:\", sharpe_weights)\n",
+    "    print(\"Performance (Return, Volatility, Sharpe):\", sharpe_perf)\n",
+    "\n",
+    "    ef_minvol = EfficientFrontier(mu, cov, weight_bounds=(0, 1))\n",
+    "    ef_minvol.add_objective(objective_functions.L2_reg, gamma=gamma_slider.value)\n",
+    "    ef_minvol.add_sector_constraints(sector_mapper,\n",
+    "                                     {s: pair[0].value for s, pair in sector_constraint_widgets.items()},\n",
+    "                                     {s: pair[1].value for s, pair in sector_constraint_widgets.items()})\n",
+    "    ef_minvol.min_volatility()\n",
+    "    minvol_weights = ef_minvol.clean_weights()\n",
+    "    minvol_perf = ef_minvol.portfolio_performance()\n",
+    "    print(\"\\n🛡 Min Volatility Portfolio:\")\n",
+    "    print(\"Weights:\", minvol_weights)\n",
+    "    print(\"Performance (Return, Volatility, Sharpe):\", minvol_perf)\n",
+    "\n",
+    "except Exception as e:\n",
+    "    print(\"❌ Error during additional analysis:\", e)\n"
+   ]
+  }
+ ],
+ "metadata": {},
+ "nbformat": 4,
+ "nbformat_minor": 5
+}
